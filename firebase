@@ -1,0 +1,115 @@
+// #include <Wire.h>
+
+#include <Arduino.h>
+#if defined(ESP32) || defined(ARDUINO_RASPBERRY_PI_PICO_W)
+#include <WiFi.h>
+#elif defined(ESP8266)
+#include <ESP8266WiFi.h>
+#elif __has_include(<WiFiNINA.h>)
+#include <WiFiNINA.h>
+#elif __has_include(<WiFi101.h>)
+#include <WiFi101.h>
+#elif __has_include(<WiFiS3.h>)
+#include <WiFiS3.h>
+#endif
+
+
+// #include <Wire.h>
+// #include <Adafruit_SSD1306.h>
+// #include <Adafruit_GFX.h>
+#include <Firebase_ESP_Client.h>
+
+
+// Provide the token generation process info.
+#include <addons/TokenHelper.h>
+
+// Provide the RTDB payload printing info and other helper functions.
+#include <addons/RTDBHelper.h>
+
+
+
+/* 1. Define the WiFi credentials */
+#define WIFI_SSID "realme 8"
+#define WIFI_PASSWORD "alfred123"
+
+// #define SCREEN_WIDTH 128 // OLED display width, in pixels
+// #define SCREEN_HEIGHT 64 // OLED display height, in pixels
+
+// // Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
+// Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+
+/* 2. Define the API Key */
+#define API_KEY "AIzaSyDnMCjizFK9rzNBwxa8Lrk7SO7g7poopoE"
+
+/* 3. Define the RTDB URL */
+#define DATABASE_URL "https://studiesy-default-rtdb.firebaseio.com/"
+
+/* 4. Define the user Email and password */
+#define USER_EMAIL "teammarkten@gmail.com"
+#define USER_PASSWORD "markit123"
+
+FirebaseData fbdo;
+FirebaseConfig config;
+FirebaseAuth auth;
+
+void setup()
+{
+  Serial.begin(115200);
+
+  // Connect to Wi-Fi
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  Serial.print("Connecting to Wi-Fi");
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    Serial.print(".");
+    delay(300);
+  }
+  Serial.println();
+  Serial.print("Connected with IP: ");
+  Serial.println(WiFi.localIP());
+
+  // Initialize Firebase
+  config.api_key = API_KEY;
+  config.database_url = DATABASE_URL;
+   config.token_status_callback = tokenStatusCallback; 
+   auth.user.email = USER_EMAIL;
+  auth.user.password = USER_PASSWORD;
+
+
+  Firebase.begin(&config,&auth);
+
+//    if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3D for 128x64
+//     Serial.println(F("SSD1306 allocation failed"));
+//     for(;;);
+//   }
+//   delay(2000);
+//   display.clearDisplay();
+
+//   display.setTextSize(1);
+//   display.setTextColor(WHITE);
+//   display.setCursor(0, 10);
+//   // Display static text
+//   display.println("Hello, world!");
+//   display.display(); 
+// }
+}
+
+void loop()
+{
+  if (Firebase.ready())
+  {
+    if (Firebase.RTDB.getString(&fbdo, "/teacher"))
+    {
+      String stringValue = fbdo.to<String>();
+      Serial.print("String value from RTDB: ");
+      Serial.println(stringValue);
+    }
+    else
+    {
+      Serial.print("Error fetching string: ");
+      Serial.println(fbdo.errorReason());
+    }
+  }
+
+  delay(100); // Fetch data every 5 seconds
+}
